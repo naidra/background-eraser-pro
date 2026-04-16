@@ -194,7 +194,7 @@ export default function Index() {
                   className="gap-2 rounded-xl px-8 text-base"
                 >
                   <WandSparkles className="h-5 w-5" />
-                  Refine Cutout
+                  Manual Erase/Restore
                 </Button>
                 <Button
                   variant="outline"
