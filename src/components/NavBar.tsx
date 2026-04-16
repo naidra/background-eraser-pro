@@ -12,7 +12,7 @@ export default function NavBar() {
         </div>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <span className="hidden sm:inline rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            100% Free
+            100% Free & private
           </span>
         </div>
       </div>

@@ -39,15 +39,17 @@ export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
       className={`
-        relative flex flex-col items-center gap-5 rounded-2xl border-2 border-dashed p-10 text-center
-        transition-all duration-200
+        relative flex min-h-[360px] flex-col items-center justify-center gap-5 overflow-hidden rounded-[28px]
+        border-2 border-dashed px-8 py-10 text-center transition-all duration-200
         ${dragOver
-          ? "border-primary bg-primary/5 scale-[1.01]"
-          : "border-border hover:border-primary/40 hover:bg-secondary/50"
+          ? "border-primary bg-primary/[0.08] shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)] scale-[1.01]"
+          : "border-border/80 bg-gradient-to-b from-background to-secondary/55 hover:border-primary/40 hover:bg-secondary/70"
         }
         ${disabled ? "opacity-50 pointer-events-none" : ""}
       `}
     >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-primary/[0.06] to-transparent" />
+
       <input
         ref={inputRef}
         type="file"
@@ -60,8 +62,18 @@ export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
         }}
       />
 
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-        <Upload className="h-7 w-7 text-primary" />
+      <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/15 bg-background shadow-sm">
+        <div className="absolute inset-0 rounded-2xl bg-primary/[0.07]" />
+        <Upload className="relative z-10 h-7 w-7 text-primary" />
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-xl font-semibold tracking-tight text-foreground">
+          Drop your image here
+        </h3>
+        <p className="max-w-xs text-sm leading-6 text-muted-foreground">
+          Clean, private background removal directly in your browser.
+        </p>
       </div>
 
       <Button
@@ -69,13 +81,13 @@ export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
         size="lg"
         onClick={() => inputRef.current?.click()}
         disabled={disabled}
-        className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8 text-base font-semibold shadow-md"
+        className="rounded-xl bg-primary px-8 text-base font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
       >
         Upload Image
       </Button>
 
-      <p className="text-sm text-muted-foreground">
-        or drop a file · PNG, JPG, WebP
+      <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground/75">
+        PNG · JPG · WebP
       </p>
     </div>
   );

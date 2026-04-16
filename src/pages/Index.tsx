@@ -139,7 +139,10 @@ export default function Index() {
 
               {/* Right: Upload Card */}
               <div className="w-full max-w-md lg:max-w-lg flex-shrink-0">
-                <div className="rounded-3xl bg-card border border-border p-6 sm:p-8" style={{ boxShadow: "var(--shadow-elevated)" }}>
+                <div
+                  className="rounded-[32px] border border-border/70 bg-card/92 p-2 backdrop-blur-sm"
+                  style={{ boxShadow: "var(--shadow-elevated)" }}
+                >
                   <DropZone
                     onImageSelect={handleImage}
                     disabled={!ready || loading}
@@ -159,7 +162,7 @@ export default function Index() {
                       {error}
                     </p>
                   )}
-                  <p className="mt-4 text-center text-xs text-muted-foreground/70">
+                  <p className="mt-4 mb-1 text-center text-xs text-muted-foreground/70">
                     Your images are processed locally and never uploaded to any server.
                   </p>
                 </div>
