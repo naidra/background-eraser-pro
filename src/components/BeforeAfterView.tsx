@@ -8,7 +8,7 @@ interface BeforeAfterViewProps {
   processed: string;
 }
 
-const checkerboard = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Crect width='20' height='20' fill='%231a1a2e'/%3E%3Crect width='10' height='10' fill='%23222240'/%3E%3Crect x='10' y='10' width='10' height='10' fill='%23222240'/%3E%3C/svg%3E")`;
+const checkerboard = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Crect width='20' height='20' fill='%23f0f0f0'/%3E%3Crect width='10' height='10' fill='%23e0e0e0'/%3E%3Crect x='10' y='10' width='10' height='10' fill='%23e0e0e0'/%3E%3C/svg%3E")`;
 
 function SliderView({ original, processed }: BeforeAfterViewProps) {
   const [position, setPosition] = useState(50);
@@ -25,7 +25,7 @@ function SliderView({ original, processed }: BeforeAfterViewProps) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden rounded-2xl border border-border select-none touch-none cursor-col-resize"
+      className="relative w-full overflow-hidden rounded-2xl border border-border select-none touch-none cursor-col-resize shadow-md"
       onPointerDown={(e) => {
         dragging.current = true;
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -43,12 +43,7 @@ function SliderView({ original, processed }: BeforeAfterViewProps) {
         className="relative w-full"
         style={{ backgroundImage: checkerboard, backgroundSize: "20px 20px" }}
       >
-        <img
-          src={processed}
-          alt="Background removed"
-          className="block w-full h-auto"
-          draggable={false}
-        />
+        <img src={processed} alt="Background removed" className="block w-full h-auto" draggable={false} />
       </div>
 
       {/* Original (left / clipped overlay) */}
@@ -56,24 +51,15 @@ function SliderView({ original, processed }: BeforeAfterViewProps) {
         className="absolute inset-0 overflow-hidden"
         style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
       >
-        <img
-          src={original}
-          alt="Original"
-          className="block w-full h-auto"
-          draggable={false}
-        />
+        <img src={original} alt="Original" className="block w-full h-auto" draggable={false} />
       </div>
 
       {/* Divider line */}
       <div
-        className="absolute top-0 bottom-0 z-10 w-[2px] -translate-x-1/2 transition-[left] duration-[0ms]"
-        style={{
-          left: `${position}%`,
-          background: "linear-gradient(180deg, hsl(190 90% 50% / 0.6), hsl(220 90% 56% / 0.6))",
-        }}
+        className="absolute top-0 bottom-0 z-10 w-[2px] -translate-x-1/2"
+        style={{ left: `${position}%`, background: "hsl(var(--primary))" }}
       >
-        {/* Handle */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full h-10 w-10 border-2 border-primary/60 bg-background/90 shadow-lg backdrop-blur-sm transition-transform hover:scale-110">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full h-10 w-10 border-2 border-primary bg-card shadow-lg">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-primary">
             <path d="M6 4L3 9L6 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M12 4L15 9L12 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -82,10 +68,10 @@ function SliderView({ original, processed }: BeforeAfterViewProps) {
       </div>
 
       {/* Labels */}
-      <span className="absolute left-3 top-3 z-20 rounded-lg bg-background/70 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-md">
+      <span className="absolute left-3 top-3 z-20 rounded-lg bg-foreground/80 px-2.5 py-1 text-xs font-medium text-primary-foreground backdrop-blur-md">
         Before
       </span>
-      <span className="absolute right-3 top-3 z-20 rounded-lg bg-background/70 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-md">
+      <span className="absolute right-3 top-3 z-20 rounded-lg bg-foreground/80 px-2.5 py-1 text-xs font-medium text-primary-foreground backdrop-blur-md">
         After
       </span>
     </div>
@@ -94,19 +80,19 @@ function SliderView({ original, processed }: BeforeAfterViewProps) {
 
 function SideBySideView({ original, processed }: BeforeAfterViewProps) {
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <div className="relative overflow-hidden rounded-2xl border border-border">
+    <div className="grid grid-cols-2 gap-4">
+      <div className="relative overflow-hidden rounded-2xl border border-border shadow-sm">
         <img src={original} alt="Original" className="block w-full h-auto" />
-        <span className="absolute left-3 top-3 rounded-lg bg-background/70 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-md">
+        <span className="absolute left-3 top-3 rounded-lg bg-foreground/80 px-2.5 py-1 text-xs font-medium text-primary-foreground backdrop-blur-md">
           Before
         </span>
       </div>
       <div
-        className="relative overflow-hidden rounded-2xl border border-border"
+        className="relative overflow-hidden rounded-2xl border border-border shadow-sm"
         style={{ backgroundImage: checkerboard, backgroundSize: "20px 20px" }}
       >
         <img src={processed} alt="Processed" className="block w-full h-auto" />
-        <span className="absolute right-3 top-3 rounded-lg bg-background/70 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-md">
+        <span className="absolute right-3 top-3 rounded-lg bg-foreground/80 px-2.5 py-1 text-xs font-medium text-primary-foreground backdrop-blur-md">
           After
         </span>
       </div>
@@ -119,12 +105,11 @@ function ToggleView({ original, processed }: BeforeAfterViewProps) {
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl border border-border cursor-pointer"
+      className="relative w-full overflow-hidden rounded-2xl border border-border cursor-pointer shadow-md"
       onPointerDown={() => setShowOriginal(true)}
       onPointerUp={() => setShowOriginal(false)}
       onPointerLeave={() => setShowOriginal(false)}
     >
-      {/* Processed bg */}
       <div
         className="relative w-full"
         style={{ backgroundImage: checkerboard, backgroundSize: "20px 20px" }}
@@ -137,7 +122,6 @@ function ToggleView({ original, processed }: BeforeAfterViewProps) {
           draggable={false}
         />
       </div>
-      {/* Original overlay */}
       <div className="absolute inset-0">
         <img
           src={original}
@@ -147,7 +131,7 @@ function ToggleView({ original, processed }: BeforeAfterViewProps) {
           draggable={false}
         />
       </div>
-      <span className="absolute left-1/2 bottom-4 -translate-x-1/2 z-20 rounded-lg bg-background/70 px-3 py-1.5 text-xs font-medium text-foreground backdrop-blur-md transition-opacity">
+      <span className="absolute left-1/2 bottom-4 -translate-x-1/2 z-20 rounded-lg bg-foreground/80 px-3 py-1.5 text-xs font-medium text-primary-foreground backdrop-blur-md">
         {showOriginal ? "Original" : "Hold to see original"}
       </span>
     </div>
@@ -167,7 +151,7 @@ export default function BeforeAfterView({ original, processed }: BeforeAfterView
     <div className="space-y-4">
       {/* Mode switcher */}
       <div className="flex items-center justify-center">
-        <div className="inline-flex items-center gap-1 rounded-xl bg-secondary/60 p-1 backdrop-blur-sm border border-border/40">
+        <div className="inline-flex items-center gap-1 rounded-xl bg-secondary p-1 border border-border">
           {modes.map((m) => {
             const active = mode === m.key;
             return (
@@ -191,7 +175,7 @@ export default function BeforeAfterView({ original, processed }: BeforeAfterView
       </div>
 
       {/* View */}
-      <div className="animate-fade-in">
+      <div>
         {mode === "slider" && <SliderView original={original} processed={processed} />}
         {mode === "side-by-side" && <SideBySideView original={original} processed={processed} />}
         {mode === "toggle" && <ToggleView original={original} processed={processed} />}

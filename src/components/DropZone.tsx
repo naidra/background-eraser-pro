@@ -1,5 +1,6 @@
 import { useCallback, useState, useRef } from "react";
 import { Upload, Image as ImageIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DropZoneProps {
   onImageSelect: (dataUrl: string) => void;
@@ -41,13 +42,12 @@ export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
-      onClick={() => !disabled && inputRef.current?.click()}
       className={`
-        relative cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center
-        transition-all duration-300 ease-out
+        relative flex flex-col items-center gap-5 rounded-2xl border-2 border-dashed p-10 text-center
+        transition-all duration-200
         ${dragOver
-          ? "border-primary bg-primary/5 scale-[1.02]"
-          : "border-border hover:border-primary/50 hover:bg-card/40"
+          ? "border-primary bg-primary/5 scale-[1.01]"
+          : "border-border hover:border-primary/40 hover:bg-secondary/50"
         }
         ${disabled ? "opacity-50 pointer-events-none" : ""}
       `}
@@ -63,24 +63,24 @@ export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
           e.target.value = "";
         }}
       />
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative">
-          <div className="rounded-2xl bg-secondary p-4">
-            <Upload className="h-8 w-8 text-primary" />
-          </div>
-          <div className="absolute -right-2 -top-2 rounded-lg bg-primary/20 p-1.5">
-            <ImageIcon className="h-4 w-4 text-primary" />
-          </div>
-        </div>
-        <div>
-          <p className="text-lg font-semibold text-foreground">
-            Drop your image here
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            or click to browse · PNG, JPG, WebP
-          </p>
-        </div>
+
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+        <Upload className="h-7 w-7 text-primary" />
       </div>
+
+      <Button
+        type="button"
+        size="lg"
+        onClick={() => inputRef.current?.click()}
+        disabled={disabled}
+        className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8 text-base font-semibold shadow-md"
+      >
+        Upload Image
+      </Button>
+
+      <p className="text-sm text-muted-foreground">
+        or drop a file · PNG, JPG, WebP
+      </p>
     </div>
   );
 }
