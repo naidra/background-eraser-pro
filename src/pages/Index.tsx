@@ -1,9 +1,10 @@
 import { useState, useCallback } from "react";
-import { Download, RotateCcw, Sparkles, Shield, Zap } from "lucide-react";
+import { Download, RotateCcw, Sparkles, Shield, Zap, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DropZone from "@/components/DropZone";
 import BeforeAfterView from "@/components/BeforeAfterView";
 import ProcessingOverlay from "@/components/ProcessingOverlay";
+import NavBar from "@/components/NavBar";
 import { useOpenCv } from "@/hooks/useOpenCv";
 
 type AppState = "idle" | "processing" | "done";
@@ -51,115 +52,162 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Ambient glow */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-primary/5 blur-[120px]" />
-      </div>
+      <NavBar />
 
-      <div className="relative mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:py-20">
-        {/* Header */}
-        <header className="mb-12 text-center animate-fade-in">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-            100% Browser-Based · No Upload Required
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-            <span className="gradient-text">Background</span>{" "}
-            <span className="text-foreground">Remover</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-            Remove image backgrounds instantly using OpenCV — everything runs
-            locally in your browser. Your images never leave your device.
-          </p>
-        </header>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        {/* Subtle background pattern */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-primary/[0.04] blur-[100px]" />
+        </div>
 
-        {/* Main card */}
-        <div
-          className="glass rounded-3xl p-6 sm:p-8 animate-fade-in"
-          style={{ animationDelay: "0.1s" }}
-        >
+        <div className="relative mx-auto max-w-6xl px-4 pt-12 pb-16 sm:px-6 lg:pt-20 lg:pb-24">
           {state === "idle" && (
-            <>
-              <DropZone
-                onImageSelect={handleImage}
-                disabled={!ready || loading}
-              />
-              {loading && (
-                <p className="mt-4 text-center text-sm text-muted-foreground">
-                  Loading OpenCV.js engine…
+            <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-start lg:gap-16">
+              {/* Left: Copy */}
+              <div className="flex-1 text-center lg:text-left lg:pt-8">
+                <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl leading-[1.1]">
+                  Remove Image{" "}
+                  <span className="gradient-text">Background</span>
+                </h1>
+                <p className="mt-4 text-lg text-muted-foreground sm:text-xl max-w-lg mx-auto lg:mx-0">
+                  100% Automatically and{" "}
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-0.5 text-sm font-semibold text-primary">
+                    Free
+                  </span>
                 </p>
-              )}
-              {error && (
-                <p className="mt-4 text-center text-sm text-destructive">
-                  {error}
+                <p className="mt-6 text-muted-foreground max-w-md mx-auto lg:mx-0">
+                  Remove backgrounds instantly using OpenCV — everything runs
+                  locally in your browser. Your images never leave your device.
                 </p>
-              )}
-            </>
+
+                {/* Feature pills */}
+                <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
+                  {[
+                    { icon: Shield, text: "100% Private" },
+                    { icon: Zap, text: "Instant Results" },
+                    { icon: Sparkles, text: "No Sign-up" },
+                  ].map((f) => (
+                    <div
+                      key={f.text}
+                      className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-2 text-sm text-muted-foreground"
+                    >
+                      <f.icon className="h-4 w-4 text-primary" />
+                      {f.text}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Upload Card */}
+              <div className="w-full max-w-md lg:max-w-lg flex-shrink-0">
+                <div className="rounded-3xl bg-card border border-border p-6 sm:p-8" style={{ boxShadow: "var(--shadow-elevated)" }}>
+                  <DropZone
+                    onImageSelect={handleImage}
+                    disabled={!ready || loading}
+                  />
+                  {loading && (
+                    <p className="mt-4 text-center text-sm text-muted-foreground">
+                      Loading OpenCV.js engine…
+                    </p>
+                  )}
+                  {error && (
+                    <p className="mt-4 text-center text-sm text-destructive">
+                      {error}
+                    </p>
+                  )}
+                  <p className="mt-4 text-center text-xs text-muted-foreground/70">
+                    Your images are processed locally and never uploaded to any server.
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
 
           {state === "processing" && <ProcessingOverlay />}
 
           {state === "done" && original && result && (
-            <div className="space-y-6">
+            <div className="mx-auto max-w-4xl space-y-6">
               <BeforeAfterView original={original} processed={result} />
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Button
                   onClick={download}
-                  className="gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-6"
+                  size="lg"
+                  className="gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8 text-base font-semibold shadow-md"
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-5 w-5" />
                   Download PNG
                 </Button>
                 <Button
                   variant="outline"
+                  size="lg"
                   onClick={reset}
-                  className="gap-2 rounded-xl px-6"
+                  className="gap-2 rounded-xl px-8 text-base"
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className="h-5 w-5" />
                   New Image
                 </Button>
               </div>
             </div>
           )}
         </div>
+      </section>
 
-        {/* Features */}
-        <div
-          className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3 animate-fade-in"
-          style={{ animationDelay: "0.2s" }}
-        >
-          {[
-            {
-              icon: Shield,
-              title: "Private",
-              desc: "Images never leave your device",
-            },
-            {
-              icon: Zap,
-              title: "Fast",
-              desc: "OpenCV GrabCut runs in milliseconds",
-            },
-            {
-              icon: Sparkles,
-              title: "Free",
-              desc: "No limits, no watermarks, no sign-up",
-            },
-          ].map((f) => (
-            <div
-              key={f.title}
-              className="flex items-start gap-3 rounded-2xl bg-card/40 p-5 border border-border/40"
-            >
-              <div className="rounded-xl bg-secondary p-2.5">
-                <f.icon className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">{f.title}</p>
-                <p className="text-sm text-muted-foreground">{f.desc}</p>
-              </div>
+      {/* Features Section */}
+      {state === "idle" && (
+        <section className="border-t border-border bg-secondary/30 py-16 sm:py-20">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
+              One tool, endless uses
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-center text-muted-foreground">
+              High-quality background removal powered by OpenCV's GrabCut algorithm, running entirely in your browser.
+            </p>
+
+            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
+              {[
+                {
+                  icon: Shield,
+                  title: "100% Private",
+                  desc: "Your images stay on your device. Nothing is ever uploaded to a server.",
+                },
+                {
+                  icon: Zap,
+                  title: "Lightning Fast",
+                  desc: "OpenCV's GrabCut algorithm processes images in milliseconds.",
+                },
+                {
+                  icon: Sparkles,
+                  title: "Completely Free",
+                  desc: "No limits, no watermarks, no sign-up required. Use it as much as you want.",
+                },
+              ].map((f) => (
+                <div
+                  key={f.title}
+                  className="rounded-2xl bg-card border border-border p-6 text-center transition-shadow hover:shadow-md"
+                >
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                    <f.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">{f.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+        </section>
+      )}
+
+      {/* Footer */}
+      <footer className="border-t border-border py-8">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 flex flex-col items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Scissors className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-foreground">BG Remover</span>
+          </div>
+          <p>100% browser-based · Powered by OpenCV.js · No data leaves your device</p>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }
