@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { Download, RotateCcw, Sparkles, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DropZone from "@/components/DropZone";
-import ImageComparison from "@/components/ImageComparison";
+import BeforeAfterView from "@/components/BeforeAfterView";
 import ProcessingOverlay from "@/components/ProcessingOverlay";
 import { useOpenCv } from "@/hooks/useOpenCv";
 
@@ -101,7 +101,7 @@ export default function Index() {
 
           {state === "done" && original && result && (
             <div className="space-y-6">
-              <ImageComparison original={original} processed={result} />
+              <BeforeAfterView original={original} processed={result} />
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Button
                   onClick={download}
