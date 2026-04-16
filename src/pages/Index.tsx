@@ -51,11 +51,11 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <NavBar />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section className="relative grow overflow-hidden">
         {/* Subtle background pattern */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-primary/[0.04] blur-[100px]" />
@@ -68,7 +68,7 @@ export default function Index() {
               <div className="flex-1 text-center lg:text-left lg:pt-8">
                 <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl leading-[1.1]">
                   Remove Image{" "}
-                  <span className="gradient-text">Background</span>
+                  <span className="text-primary">Background</span>
                 </h1>
                 <p className="mt-4 text-lg text-muted-foreground sm:text-xl max-w-lg mx-auto lg:mx-0">
                   100% Automatically and{" "}
@@ -152,51 +152,6 @@ export default function Index() {
           )}
         </div>
       </section>
-
-      {/* Features Section */}
-      {state === "idle" && (
-        <section className="border-t border-border bg-secondary/30 py-16 sm:py-20">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6">
-            <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
-              One tool, endless uses
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-center text-muted-foreground">
-              High-quality background removal powered by OpenCV's GrabCut algorithm, running entirely in your browser.
-            </p>
-
-            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {[
-                {
-                  icon: Shield,
-                  title: "100% Private",
-                  desc: "Your images stay on your device. Nothing is ever uploaded to a server.",
-                },
-                {
-                  icon: Zap,
-                  title: "Lightning Fast",
-                  desc: "OpenCV's GrabCut algorithm processes images in milliseconds.",
-                },
-                {
-                  icon: Sparkles,
-                  title: "Completely Free",
-                  desc: "No limits, no watermarks, no sign-up required. Use it as much as you want.",
-                },
-              ].map((f) => (
-                <div
-                  key={f.title}
-                  className="rounded-2xl bg-card border border-border p-6 text-center transition-shadow hover:shadow-md"
-                >
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                    <f.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground">{f.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Footer */}
       <footer className="border-t border-border py-8">

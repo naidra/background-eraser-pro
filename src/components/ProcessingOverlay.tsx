@@ -5,7 +5,7 @@ export default function ProcessingOverlay() {
     <div className="flex flex-col items-center gap-5 py-20">
       <div className="relative">
         <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          <span className="block animate-spin"><Loader2 className="h-8 w-8 text-primary"/></span>
         </div>
       </div>
       <div className="text-center">
