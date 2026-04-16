@@ -11,7 +11,7 @@ export default function ProcessingOverlay() {
       <div className="text-center">
         <p className="text-lg font-semibold text-foreground">Removing background…</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Processing entirely in your browser with OpenCV
+          Running locally in a worker with refined edge smoothing
         </p>
       </div>
     </div>

@@ -1,30 +1,60 @@
-import { useState, useCallback } from "react";
-import { Download, RotateCcw, Sparkles, Shield, Zap, Scissors } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Download, RotateCcw, Sparkles, Shield, Zap, Scissors, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DropZone from "@/components/DropZone";
 import BeforeAfterView from "@/components/BeforeAfterView";
 import ProcessingOverlay from "@/components/ProcessingOverlay";
 import NavBar from "@/components/NavBar";
+import MaskRefinementDialog from "@/components/MaskRefinementDialog";
 import { useOpenCv } from "@/hooks/useOpenCv";
 
 type AppState = "idle" | "processing" | "done";
 
 export default function Index() {
-  const { ready, loading, removeBackground } = useOpenCv();
+  const { ready, loading, error: engineError, removeBackground } = useOpenCv();
   const [state, setState] = useState<AppState>("idle");
   const [original, setOriginal] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refineOpen, setRefineOpen] = useState(false);
+  const originalUrlRef = useRef<string | null>(null);
+  const resultUrlRef = useRef<string | null>(null);
+
+  const clearOriginalUrl = useCallback(() => {
+    if (!originalUrlRef.current) return;
+    URL.revokeObjectURL(originalUrlRef.current);
+    originalUrlRef.current = null;
+  }, []);
+
+  const clearResultUrl = useCallback(() => {
+    if (!resultUrlRef.current) return;
+    URL.revokeObjectURL(resultUrlRef.current);
+    resultUrlRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearOriginalUrl();
+      clearResultUrl();
+    };
+  }, [clearOriginalUrl, clearResultUrl]);
 
   const handleImage = useCallback(
-    async (dataUrl: string) => {
-      setOriginal(dataUrl);
+    async (file: File) => {
+      clearOriginalUrl();
+      clearResultUrl();
+
+      const originalUrl = URL.createObjectURL(file);
+      originalUrlRef.current = originalUrl;
+
+      setOriginal(originalUrl);
       setResult(null);
       setError(null);
       setState("processing");
 
       try {
-        const output = await removeBackground(dataUrl);
+        const output = await removeBackground(file);
+        resultUrlRef.current = output;
         setResult(output);
         setState("done");
       } catch (err: any) {
@@ -32,10 +62,12 @@ export default function Index() {
         setState("idle");
       }
     },
-    [removeBackground]
+    [clearOriginalUrl, clearResultUrl, removeBackground]
   );
 
   const reset = () => {
+    clearOriginalUrl();
+    clearResultUrl();
     setState("idle");
     setOriginal(null);
     setResult(null);
@@ -49,6 +81,12 @@ export default function Index() {
     a.download = "background-removed.png";
     a.click();
   };
+
+  const handleRefinedResult = useCallback((nextResultUrl: string) => {
+    clearResultUrl();
+    resultUrlRef.current = nextResultUrl;
+    setResult(nextResultUrl);
+  }, [clearResultUrl]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -77,8 +115,8 @@ export default function Index() {
                   </span>
                 </p>
                 <p className="mt-6 text-muted-foreground max-w-md mx-auto lg:mx-0">
-                  Remove backgrounds instantly using OpenCV — everything runs
-                  locally in your browser. Your images never leave your device.
+                  Remove backgrounds instantly using OpenCV. The engine runs
+                  locally in your browser, so your images never leave your device.
                 </p>
 
                 {/* Feature pills */}
@@ -108,7 +146,12 @@ export default function Index() {
                   />
                   {loading && (
                     <p className="mt-4 text-center text-sm text-muted-foreground">
-                      Loading OpenCV.js engine…
+                      Loading the local OpenCV engine…
+                    </p>
+                  )}
+                  {engineError && (
+                    <p className="mt-4 text-center text-sm text-destructive">
+                      {engineError}
                     </p>
                   )}
                   {error && (
@@ -129,6 +172,9 @@ export default function Index() {
           {state === "done" && original && result && (
             <div className="mx-auto max-w-4xl space-y-6">
               <BeforeAfterView original={original} processed={result} />
+              <div className="rounded-2xl border border-border bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
+                Need a cleaner edge? Open the refinement brush and paint what to keep or remove.
+              </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Button
                   onClick={download}
@@ -137,6 +183,15 @@ export default function Index() {
                 >
                   <Download className="h-5 w-5" />
                   Download PNG
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setRefineOpen(true)}
+                  className="gap-2 rounded-xl px-8 text-base"
+                >
+                  <WandSparkles className="h-5 w-5" />
+                  Refine Cutout
                 </Button>
                 <Button
                   variant="outline"
@@ -152,6 +207,16 @@ export default function Index() {
           )}
         </div>
       </section>
+
+      {original && result && (
+        <MaskRefinementDialog
+          open={refineOpen}
+          original={original}
+          processed={result}
+          onApply={handleRefinedResult}
+          onOpenChange={setRefineOpen}
+        />
+      )}
 
       {/* Footer */}
       <footer className="border-t border-border py-8">

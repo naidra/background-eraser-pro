@@ -1,9 +1,9 @@
 import { useCallback, useState, useRef } from "react";
-import { Upload, Image as ImageIcon } from "lucide-react";
+import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DropZoneProps {
-  onImageSelect: (dataUrl: string) => void;
+  onImageSelect: (file: File) => void;
   disabled?: boolean;
 }
 
@@ -14,11 +14,7 @@ export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
   const handleFile = useCallback(
     (file: File) => {
       if (!file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) onImageSelect(e.target.result as string);
-      };
-      reader.readAsDataURL(file);
+      onImageSelect(file);
     },
     [onImageSelect]
   );
