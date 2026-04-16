@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { Download, RotateCcw, Sparkles, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DropZone from "@/components/DropZone";
-import ImageComparison from "@/components/ImageComparison";
+import BeforeAfterView from "@/components/BeforeAfterView";
 import ProcessingOverlay from "@/components/ProcessingOverlay";
 import { useOpenCv } from "@/hooks/useOpenCv";
 
