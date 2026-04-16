@@ -104,7 +104,7 @@ export default function Index() {
             <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-start lg:gap-16">
               {/* Left: Copy */}
               <div className="flex-1 text-center lg:text-left lg:pt-8">
-                <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl leading-[1.1]">
+                <h1 className="text-4xl font-extrabold tracking-tight text-gray-700 sm:text-5xl lg:text-6xl leading-[1.1]">
                   Remove Image{" "}
                   <span className="text-primary">Background</span>
                 </h1>
