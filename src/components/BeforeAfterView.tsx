@@ -145,7 +145,7 @@ const modes: { key: ViewMode; label: string; icon: typeof SlidersHorizontal }[] 
 ];
 
 export default function BeforeAfterView({ original, processed }: BeforeAfterViewProps) {
-  const [mode, setMode] = useState<ViewMode>("slider");
+  const [mode, setMode] = useState<ViewMode>("side-by-side");
 
   return (
     <div className="space-y-4">
