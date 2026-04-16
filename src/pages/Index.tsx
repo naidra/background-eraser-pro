@@ -101,7 +101,7 @@ export default function Index() {
 
           {state === "done" && original && result && (
             <div className="space-y-6">
-              <ImageComparison original={original} processed={result} />
+              <BeforeAfterView original={original} processed={result} />
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Button
                   onClick={download}
