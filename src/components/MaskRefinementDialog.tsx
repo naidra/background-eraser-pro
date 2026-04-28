@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Brush, Eraser, Eye, EyeOff, RotateCcw, Undo2 } from "lucide-react";
+import { Brush, Eraser, Eye, EyeOff, RotateCcw, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -66,6 +66,8 @@ export default function MaskRefinementDialog({
   const [brushMode, setBrushMode] = useState<BrushMode>("keep");
   const [previewMode, setPreviewMode] = useState<PreviewMode>("overlay");
   const [brushSize, setBrushSize] = useState(36);
+  const [zoomPercent, setZoomPercent] = useState(100);
+  const [fitCanvasWidth, setFitCanvasWidth] = useState(0);
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +113,23 @@ export default function MaskRefinementDialog({
     context.putImageData(new ImageData(pixels, width, height), 0, 0);
   }, [previewMode]);
 
+  const updateFitCanvasWidth = useCallback(() => {
+    const container = containerRef.current;
+    const { width, height } = dimensionsRef.current;
+    if (!container || !width || !height) return;
+
+    const styles = window.getComputedStyle(container);
+    const horizontalPadding =
+      parseFloat(styles.paddingLeft || "0") + parseFloat(styles.paddingRight || "0");
+    const availableWidth = Math.max(160, container.clientWidth - horizontalPadding);
+    const maxHeight = Math.max(240, window.innerHeight * 0.65);
+
+    const widthConstrained = Math.min(width, availableWidth);
+    const heightConstrained = Math.min(width, (maxHeight / height) * width);
+
+    setFitCanvasWidth(Math.max(160, Math.min(widthConstrained, heightConstrained)));
+  }, []);
+
   useEffect(() => {
     if (!open) return;
 
@@ -120,6 +139,8 @@ export default function MaskRefinementDialog({
       setLoading(true);
       setError(null);
       setReady(false);
+      setZoomPercent(100);
+      setFitCanvasWidth(0);
       historyRef.current = [];
       setHistoryDepth(0);
 
@@ -187,6 +208,19 @@ export default function MaskRefinementDialog({
       renderPreview();
     }
   }, [ready, renderPreview]);
+
+  useEffect(() => {
+    if (!open || !ready) return;
+
+    updateFitCanvasWidth();
+    const animationFrame = window.requestAnimationFrame(updateFitCanvasWidth);
+    window.addEventListener("resize", updateFitCanvasWidth);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", updateFitCanvasWidth);
+    };
+  }, [open, ready, updateFitCanvasWidth]);
 
   const pushHistory = useCallback(() => {
     if (!maskRef.current) return;
@@ -393,6 +427,28 @@ export default function MaskRefinementDialog({
             </div>
 
             <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm font-semibold text-foreground">
+                <span>Zoom</span>
+                <span className="text-muted-foreground">{zoomPercent}%</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <ZoomOut className="h-4 w-4 text-muted-foreground" />
+                <input
+                  type="range"
+                  min={100}
+                  max={400}
+                  step={25}
+                  value={zoomPercent}
+                  onChange={(event) => setZoomPercent(Number(event.target.value))}
+                  className="w-full accent-primary"
+                  disabled={!ready}
+                  aria-label="Zoom image"
+                />
+                <ZoomIn className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <p className="text-sm font-semibold text-foreground">Preview</p>
               <div className="grid grid-cols-2 gap-2">
                 <Button
@@ -446,9 +502,9 @@ export default function MaskRefinementDialog({
           <div className="space-y-4">
             <div
               ref={containerRef}
-              className="overflow-auto rounded-3xl border border-border bg-secondary/30 p-3"
+              className="max-h-[65vh] overflow-auto rounded-3xl border border-border bg-secondary/30 p-3"
             >
-              <div className="mx-auto max-w-full">
+              <div className="min-w-full">
                 {loading && (
                   <div className="flex min-h-[320px] items-center justify-center text-sm text-muted-foreground">
                     Preparing the refinement editor…
@@ -462,10 +518,17 @@ export default function MaskRefinementDialog({
                 )}
 
                 {!loading && !error && (
-                  <div className="relative inline-block max-w-full">
+                  <div
+                    className="relative mx-auto"
+                    style={{
+                      width: fitCanvasWidth
+                        ? `${Math.round(fitCanvasWidth * (zoomPercent / 100))}px`
+                        : "100%",
+                    }}
+                  >
                     <canvas
                       ref={canvasRef}
-                      className="block h-auto max-h-[65vh] w-full touch-none rounded-2xl border border-border bg-background"
+                      className="block h-auto w-full max-w-none touch-none rounded-2xl border border-border bg-background"
                       onPointerDown={handlePointerDown}
                       onPointerMove={handlePointerMove}
                       onPointerUp={stopDrawing}
