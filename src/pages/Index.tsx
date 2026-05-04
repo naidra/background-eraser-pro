@@ -127,20 +127,26 @@ export default function Index() {
         </div>
 
         <Tabs defaultValue="bg-remover" className="relative mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 lg:pt-12 lg:pb-24">
-          <div className="mb-8 flex justify-center">
-            <TabsList className="h-11 rounded-xl border border-border bg-card p-1 shadow-sm">
-              <TabsTrigger value="bg-remover" className="h-9 gap-2 rounded-lg px-4">
+          <div className="mb-6 flex justify-center">
+            <TabsList className="h-10 rounded-lg border border-border bg-muted/70 p-0.5 shadow-sm">
+              <TabsTrigger
+                value="bg-remover"
+                className="h-9 gap-1.5 rounded-md border border-transparent px-3.5 text-sm font-semibold text-muted-foreground shadow-none transition-all data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:[&>svg]:text-primary"
+              >
                 <ImageIcon className="h-4 w-4" />
                 Bg Remover
               </TabsTrigger>
-              <TabsTrigger value="extract-text" className="h-9 gap-2 rounded-lg px-4">
+              <TabsTrigger
+                value="extract-text"
+                className="h-9 gap-1.5 rounded-md border border-transparent px-3.5 text-sm font-semibold text-muted-foreground shadow-none transition-all data-[state=active]:border-border data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:[&>svg]:text-primary"
+              >
                 <FileText className="h-4 w-4" />
                 Extract text
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="bg-remover" className="mt-0">
+          <TabsContent value="bg-remover" className="mx-auto mt-0 w-full">
             {state === "idle" && (
               <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-start lg:gap-16">
                 <div className="flex-1 text-center lg:text-left lg:pt-8">
@@ -248,9 +254,9 @@ export default function Index() {
             )}
           </TabsContent>
 
-          <TabsContent value="extract-text" className="mt-0">
+          <TabsContent value="extract-text" className="mx-auto mt-0 w-full">
             {!textOriginal ? (
-              <div className="mx-auto grid max-w-5xl items-center gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+              <div className="grid w-full items-center gap-8 lg:grid-cols-[0.95fr_1.05fr]">
                 <div className="text-center lg:text-left">
                   <h1 className="text-3xl font-extrabold tracking-tight text-gray-700 sm:text-4xl">
                     Extract text from images
@@ -272,32 +278,33 @@ export default function Index() {
                   </div>
                 </div>
 
-                <div
-                  className="rounded-[28px] border border-border/70 bg-card/92 p-2 backdrop-blur-sm"
-                  style={{ boxShadow: "var(--shadow-elevated)" }}
-                >
-                  <DropZone
-                    onImageSelect={handleTextImage}
-                    disabled={!ready || loading}
-                    title="Upload an image with text"
-                    description="Use PNG, JPG, or WebP files for local text detection and OCR."
-                    buttonLabel="Upload for OCR"
-                    compact
-                  />
-                  {loading && (
-                    <p className="mt-3 text-center text-sm text-muted-foreground">
-                      Loading the local OpenCV engine…
-                    </p>
-                  )}
-                  {engineError && (
-                    <p className="mt-3 text-center text-sm text-destructive">
-                      {engineError}
-                    </p>
-                  )}
+                <div className="w-full max-w-md justify-self-center lg:max-w-lg lg:justify-self-end">
+                  <div
+                    className="rounded-[32px] border border-border/70 bg-card/92 p-2 backdrop-blur-sm"
+                    style={{ boxShadow: "var(--shadow-elevated)" }}
+                  >
+                    <DropZone
+                      onImageSelect={handleTextImage}
+                      disabled={!ready || loading}
+                      title="Upload an image with text"
+                      description="Use PNG, JPG, or WebP files for local text detection and OCR."
+                      buttonLabel="Upload for OCR"
+                    />
+                    {loading && (
+                      <p className="mt-4 text-center text-sm text-muted-foreground">
+                        Loading the local OpenCV engine…
+                      </p>
+                    )}
+                    {engineError && (
+                      <p className="mt-4 text-center text-sm text-destructive">
+                        {engineError}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="mx-auto max-w-5xl">
+              <div className="w-full">
                 <TextRecognitionPanel
                   imageUrl={textOriginal}
                   detectTextRegions={detectTextRegions}
@@ -325,6 +332,8 @@ export default function Index() {
           <div className="flex items-center gap-2">
             <Scissors className="h-4 w-4 text-primary" />
             <span className="font-semibold text-foreground">BG Remover</span>
+            <span> and </span>
+            <span className="font-semibold text-foreground">Text Extractor</span>
           </div>
           <p>100% browser-based · No data leaves your device</p>
         </div>

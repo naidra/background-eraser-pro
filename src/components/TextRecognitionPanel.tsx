@@ -154,7 +154,7 @@ export default function TextRecognitionPanel({ imageUrl, detectTextRegions, onRe
         </div>
       </div>
 
-      <div className="mt-3 grid items-start gap-3 lg:grid-cols-[minmax(0,720px)_minmax(280px,1fr)]">
+      <div className="mt-3 grid items-start gap-3 lg:grid-cols-2">
         <div className="overflow-auto rounded-xl border border-border bg-secondary/35 p-2">
           <div
             className="relative mx-auto overflow-hidden rounded-lg bg-background"
@@ -187,7 +187,7 @@ export default function TextRecognitionPanel({ imageUrl, detectTextRegions, onRe
           </div>
         </div>
 
-        <div className="min-h-[180px] rounded-xl border border-border bg-secondary/25 p-3">
+        <div className="min-h-[180px] rounded-xl border border-border bg-secondary/25 p-3 lg:min-h-full">
           <div className="mb-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             Recognized text
           </div>
