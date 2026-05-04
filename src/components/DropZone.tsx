@@ -5,9 +5,20 @@ import { Button } from "@/components/ui/button";
 interface DropZoneProps {
   onImageSelect: (file: File) => void;
   disabled?: boolean;
+  title?: string;
+  description?: string;
+  buttonLabel?: string;
+  compact?: boolean;
 }
 
-export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
+export default function DropZone({
+  onImageSelect,
+  disabled,
+  title = "Drop your image here",
+  description = "Clean, private background removal directly in your browser.",
+  buttonLabel = "Upload Image",
+  compact = false,
+}: DropZoneProps) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -39,8 +50,9 @@ export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
       className={`
-        relative flex min-h-[360px] flex-col items-center justify-center gap-5 overflow-hidden rounded-[28px]
-        border-2 border-dashed px-8 py-10 text-center transition-all duration-200
+        relative flex flex-col items-center justify-center overflow-hidden rounded-[28px]
+        border-2 border-dashed px-8 text-center transition-all duration-200
+        ${compact ? "min-h-[260px] gap-4 py-7" : "min-h-[360px] gap-5 py-10"}
         ${dragOver
           ? "border-primary bg-primary/[0.08] shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)] scale-[1.01]"
           : "border-border/80 bg-gradient-to-b from-background to-secondary/55 hover:border-primary/40 hover:bg-secondary/70"
@@ -62,17 +74,17 @@ export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
         }}
       />
 
-      <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/15 bg-background shadow-sm">
+      <div className={`relative flex items-center justify-center rounded-2xl border border-primary/15 bg-background shadow-sm ${compact ? "h-12 w-12" : "h-16 w-16"}`}>
         <div className="absolute inset-0 rounded-2xl bg-primary/[0.07]" />
-        <Upload className="relative z-10 h-7 w-7 text-primary" />
+        <Upload className={`relative z-10 text-primary ${compact ? "h-5 w-5" : "h-7 w-7"}`} />
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-xl font-semibold tracking-tight text-foreground">
-          Drop your image here
+        <h3 className={`${compact ? "text-lg" : "text-xl"} font-semibold tracking-tight text-foreground`}>
+          {title}
         </h3>
         <p className="max-w-xs text-sm leading-6 text-muted-foreground">
-          Clean, private background removal directly in your browser.
+          {description}
         </p>
       </div>
 
@@ -81,9 +93,9 @@ export default function DropZone({ onImageSelect, disabled }: DropZoneProps) {
         size="lg"
         onClick={() => inputRef.current?.click()}
         disabled={disabled}
-        className="rounded-xl bg-primary px-8 text-base font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
+        className={`rounded-xl bg-primary font-semibold text-primary-foreground shadow-md hover:bg-primary/90 ${compact ? "px-6" : "px-8 text-base"}`}
       >
-        Upload Image
+        {buttonLabel}
       </Button>
 
       <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground/75">
