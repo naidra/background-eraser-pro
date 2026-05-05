@@ -247,7 +247,7 @@ function loadOpenCv() {
 
   cvReadyPromise = new Promise((resolve, reject) => {
     try {
-      importScripts("/opencv.js");
+      importScripts("opencv.js");
     } catch (error) {
       reject(error);
       return;

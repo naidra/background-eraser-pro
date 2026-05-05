@@ -16,7 +16,7 @@ interface ImageSize {
 
 type TextToolStatus = "idle" | "detecting" | "reading";
 
-const TESSERACT_ASSET_PATH = "/tesseract";
+const TESSERACT_ASSET_PATH = `${location.href}/tesseract`;
 const TEXT_PREVIEW_WIDTH = 720;
 
 export default function TextRecognitionPanel({ imageUrl, detectTextRegions, onReset }: TextRecognitionPanelProps) {

@@ -8,7 +8,7 @@ export default function NavBar() {
         >
           <div className="flex h-[50px] w-[50px] items-center justify-center">
             <img
-              src="/appLogo.png"
+              src={`${location.href}/appLogo.png`}
               alt="BG Remover logo"
               className="h-full w-full object-cover"
             />

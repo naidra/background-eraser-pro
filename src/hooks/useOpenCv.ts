@@ -194,7 +194,7 @@ export function useOpenCv() {
     }
 
     const script = document.createElement("script");
-    script.src = "/opencv.js";
+    script.src = `${location.href}/opencv.js`;
     script.async = true;
     script.dataset.opencvLocal = "true";
 
