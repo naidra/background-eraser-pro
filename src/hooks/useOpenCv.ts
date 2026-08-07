@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useRef } from "react";
 
 declare global {
@@ -145,6 +146,214 @@ function mergeTextRegions(regions: TextRegion[], width: number, height: number) 
     .sort((a, b) => a.y - b.y || a.x - b.x);
 }
 
+function ensureOdd(value: number) {
+  return value % 2 === 0 ? value + 1 : value;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function markMaskBorder(cv: any, mask: any, borderSize: number) {
+  if (borderSize <= 0) return;
+
+  const top = mask.roi(new cv.Rect(0, 0, mask.cols, borderSize));
+  const bottom = mask.roi(new cv.Rect(0, mask.rows - borderSize, mask.cols, borderSize));
+  const left = mask.roi(new cv.Rect(0, 0, borderSize, mask.rows));
+  const right = mask.roi(new cv.Rect(mask.cols - borderSize, 0, borderSize, mask.rows));
+
+  top.setTo(new cv.Scalar(cv.GC_BGD));
+  bottom.setTo(new cv.Scalar(cv.GC_BGD));
+  left.setTo(new cv.Scalar(cv.GC_BGD));
+  right.setTo(new cv.Scalar(cv.GC_BGD));
+
+  top.delete();
+  bottom.delete();
+  left.delete();
+  right.delete();
+}
+
+function seedGrabCutMask(cv: any, mask: any) {
+  const width = mask.cols;
+  const height = mask.rows;
+  const shortestSide = Math.min(width, height);
+  const border = Math.max(3, Math.round(shortestSide * 0.025));
+  const insetX = Math.max(border * 2, Math.round(width * 0.1));
+  const insetY = Math.max(border * 2, Math.round(height * 0.1));
+
+  markMaskBorder(cv, mask, border);
+
+  const probableForeground = new cv.Rect(
+    insetX,
+    insetY,
+    Math.max(1, width - insetX * 2),
+    Math.max(1, height - insetY * 2)
+  );
+
+  cv.rectangle(
+    mask,
+    new cv.Point(probableForeground.x, probableForeground.y),
+    new cv.Point(
+      probableForeground.x + probableForeground.width,
+      probableForeground.y + probableForeground.height
+    ),
+    new cv.Scalar(cv.GC_PR_FGD),
+    cv.FILLED
+  );
+
+  cv.ellipse(
+    mask,
+    new cv.Point(Math.round(width / 2), Math.round(height / 2)),
+    new cv.Size(
+      Math.max(8, Math.round(width * 0.22)),
+      Math.max(8, Math.round(height * 0.28))
+    ),
+    0,
+    0,
+    360,
+    new cv.Scalar(cv.GC_FGD),
+    cv.FILLED
+  );
+}
+
+function buildForegroundMask(cv: any, grabCutMask: any) {
+  const foregroundMask = new cv.Mat();
+  const sureForeground = new cv.Mat();
+  const probableForeground = new cv.Mat();
+  const ones = new cv.Mat(grabCutMask.rows, grabCutMask.cols, cv.CV_8UC1, new cv.Scalar(cv.GC_FGD));
+  const threes = new cv.Mat(grabCutMask.rows, grabCutMask.cols, cv.CV_8UC1, new cv.Scalar(cv.GC_PR_FGD));
+
+  cv.compare(grabCutMask, ones, sureForeground, cv.CMP_EQ);
+  cv.compare(grabCutMask, threes, probableForeground, cv.CMP_EQ);
+  cv.bitwise_or(sureForeground, probableForeground, foregroundMask);
+
+  ones.delete();
+  threes.delete();
+  sureForeground.delete();
+  probableForeground.delete();
+
+  return foregroundMask;
+}
+
+function refineForegroundMask(cv: any, mask: any) {
+  const shortestSide = Math.min(mask.cols, mask.rows);
+  const kernelSize = clamp(ensureOdd(Math.round(shortestSide * 0.008)), 3, 9);
+  const closeSize = clamp(ensureOdd(Math.round(shortestSide * 0.012)), 3, 11);
+  const openKernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(kernelSize, kernelSize));
+  const closeKernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(closeSize, closeSize));
+
+  cv.morphologyEx(mask, mask, cv.MORPH_OPEN, openKernel);
+  cv.morphologyEx(mask, mask, cv.MORPH_CLOSE, closeKernel);
+
+  openKernel.delete();
+  closeKernel.delete();
+}
+
+function keepForegroundComponents(cv: any, mask: any) {
+  const contours = new cv.MatVector();
+  const hierarchy = new cv.Mat();
+  const cleaned = cv.Mat.zeros(mask.rows, mask.cols, cv.CV_8UC1);
+
+  try {
+    cv.findContours(mask, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+    if (contours.size() === 0) {
+      mask.copyTo(cleaned);
+      return cleaned;
+    }
+
+    const imageArea = mask.rows * mask.cols;
+    const centerX = mask.cols / 2;
+    const centerY = mask.rows / 2;
+    const maxDistance = Math.hypot(centerX, centerY);
+    const candidates: Array<{ index: number; area: number; score: number }> = [];
+    let largestArea = 0;
+
+    for (let index = 0; index < contours.size(); index += 1) {
+      const contour = contours.get(index);
+      const rect = cv.boundingRect(contour);
+      const area = cv.contourArea(contour);
+      const rectCenterX = rect.x + rect.width / 2;
+      const rectCenterY = rect.y + rect.height / 2;
+      const centerWeight = 1 - Math.min(1, Math.hypot(rectCenterX - centerX, rectCenterY - centerY) / maxDistance);
+      const score = area * (0.75 + centerWeight * 0.5);
+
+      contour.delete();
+
+      largestArea = Math.max(largestArea, area);
+      candidates.push({ index, area, score });
+    }
+
+    const minimumArea = Math.max(24, imageArea * 0.0006);
+    const kept = candidates
+      .filter((candidate) => (
+        candidate.area >= minimumArea &&
+        (candidate.area >= largestArea * 0.035 || candidate.score >= largestArea * 0.08)
+      ))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+
+    for (const candidate of kept) {
+      cv.drawContours(cleaned, contours, candidate.index, new cv.Scalar(255), cv.FILLED);
+    }
+
+    return cleaned;
+  } finally {
+    contours.delete();
+    hierarchy.delete();
+  }
+}
+
+function applyEdgeAwareFeather(cv: any, mask: any, sourceRgb: any) {
+  const shortestSide = Math.min(mask.cols, mask.rows);
+  const kernelSize = clamp(ensureOdd(Math.round(shortestSide * 0.006)), 3, 7);
+  const blurSize = clamp(ensureOdd(Math.round(shortestSide * 0.014)), 3, 13);
+  const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(kernelSize, kernelSize));
+  const eroded = new cv.Mat();
+  const dilated = new cv.Mat();
+  const band = new cv.Mat();
+  const blurred = new cv.Mat();
+  const gray = new cv.Mat();
+  const edges = new cv.Mat();
+
+  try {
+    cv.erode(mask, eroded, kernel);
+    cv.dilate(mask, dilated, kernel);
+    cv.subtract(dilated, eroded, band);
+    cv.GaussianBlur(mask, blurred, new cv.Size(blurSize, blurSize), 0, 0, cv.BORDER_DEFAULT);
+    cv.cvtColor(sourceRgb, gray, cv.COLOR_RGB2GRAY);
+    cv.Canny(gray, edges, 45, 120);
+    cv.dilate(edges, edges, kernel);
+
+    const alpha = mask.clone();
+    const alphaPixels = alpha.data;
+    const maskPixels = mask.data;
+    const bandPixels = band.data;
+    const blurPixels = blurred.data;
+    const edgePixels = edges.data;
+
+    for (let index = 0; index < alphaPixels.length; index += 1) {
+      if (bandPixels[index] === 0) continue;
+
+      const hardAlpha = maskPixels[index];
+      const softAlpha = blurPixels[index];
+      alphaPixels[index] = edgePixels[index] > 0
+        ? Math.round(hardAlpha * 0.72 + softAlpha * 0.28)
+        : softAlpha;
+    }
+
+    return alpha;
+  } finally {
+    kernel.delete();
+    eroded.delete();
+    dilated.delete();
+    band.delete();
+    blurred.delete();
+    gray.delete();
+    edges.delete();
+  }
+}
+
 export function useOpenCv() {
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -231,6 +440,7 @@ export function useOpenCv() {
       let backgroundModel: any = null;
       let foregroundModel: any = null;
       let foregroundMask: any = null;
+      let filteredMask: any = null;
       let fullSizeAlpha: any = null;
 
       try {
@@ -238,36 +448,47 @@ export function useOpenCv() {
         sourceRgb = new cv.Mat();
         cv.cvtColor(sourceRgba, sourceRgb, cv.COLOR_RGBA2RGB);
 
-        grabCutMask = new cv.Mat();
+        grabCutMask = new cv.Mat(
+          sourceRgb.rows,
+          sourceRgb.cols,
+          cv.CV_8UC1,
+          new cv.Scalar(cv.GC_PR_BGD)
+        );
         backgroundModel = new cv.Mat();
         foregroundModel = new cv.Mat();
 
-        const margin = Math.max(Math.round(Math.min(width, height) * 0.02), 4);
-        const rect = new cv.Rect(
-          margin,
-          margin,
-          Math.max(1, width - margin * 2),
-          Math.max(1, height - margin * 2)
+        seedGrabCutMask(cv, grabCutMask);
+
+        const evaluationRect = new cv.Rect(
+          1,
+          1,
+          Math.max(1, sourceRgb.cols - 2),
+          Math.max(1, sourceRgb.rows - 2)
         );
 
-        cv.grabCut(sourceRgb, grabCutMask, rect, backgroundModel, foregroundModel, 5, cv.GC_INIT_WITH_RECT);
+        cv.grabCut(
+          sourceRgb,
+          grabCutMask,
+          evaluationRect,
+          backgroundModel,
+          foregroundModel,
+          4,
+          cv.GC_INIT_WITH_MASK
+        );
+        cv.grabCut(
+          sourceRgb,
+          grabCutMask,
+          evaluationRect,
+          backgroundModel,
+          foregroundModel,
+          2,
+          cv.GC_EVAL
+        );
 
-        foregroundMask = new cv.Mat();
-        const sureForeground = new cv.Mat();
-        const probableForeground = new cv.Mat();
-        const ones = new cv.Mat(grabCutMask.rows, grabCutMask.cols, cv.CV_8UC1, new cv.Scalar(1));
-        const threes = new cv.Mat(grabCutMask.rows, grabCutMask.cols, cv.CV_8UC1, new cv.Scalar(3));
-
-        cv.compare(grabCutMask, ones, sureForeground, cv.CMP_EQ);
-        cv.compare(grabCutMask, threes, probableForeground, cv.CMP_EQ);
-        cv.bitwise_or(sureForeground, probableForeground, foregroundMask);
-
-        sureForeground.delete();
-        probableForeground.delete();
-        ones.delete();
-        threes.delete();
-
-        fullSizeAlpha = foregroundMask;
+        foregroundMask = buildForegroundMask(cv, grabCutMask);
+        refineForegroundMask(cv, foregroundMask);
+        filteredMask = keepForegroundComponents(cv, foregroundMask);
+        fullSizeAlpha = applyEdgeAwareFeather(cv, filteredMask, sourceRgb);
 
         const outputPixels = new Uint8ClampedArray(originalImageData.data);
         const alphaPixels = fullSizeAlpha.data;
@@ -306,6 +527,8 @@ export function useOpenCv() {
         if (backgroundModel) backgroundModel.delete();
         if (foregroundModel) foregroundModel.delete();
         if (foregroundMask) foregroundMask.delete();
+        if (filteredMask) filteredMask.delete();
+        if (fullSizeAlpha) fullSizeAlpha.delete();
       }
     },
     [error, ready]
