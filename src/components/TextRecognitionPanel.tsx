@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FileText, LocateFixed, Loader2, RotateCcw } from "lucide-react";
+import { Check, Copy, FileText, LocateFixed, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TextRegion } from "@/hooks/useOpenCv";
 
@@ -19,20 +19,33 @@ type TextToolStatus = "idle" | "detecting" | "reading";
 const TESSERACT_ASSET_PATH = `${location.href}/tesseract`;
 const TEXT_PREVIEW_WIDTH = 720;
 
+const getErrorMessage = (err: unknown, fallback: string) => {
+  return err instanceof Error ? err.message : fallback;
+};
+
 export default function TextRecognitionPanel({ imageUrl, detectTextRegions, onReset }: TextRecognitionPanelProps) {
   const [regions, setRegions] = useState<TextRegion[]>([]);
   const [imageSize, setImageSize] = useState<ImageSize | null>(null);
   const [status, setStatus] = useState<TextToolStatus>("idle");
   const [progress, setProgress] = useState(0);
   const [recognizedText, setRecognizedText] = useState("");
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setRegions([]);
     setRecognizedText("");
+    setCopied(false);
     setError(null);
     setProgress(0);
   }, [imageUrl]);
+
+  useEffect(() => {
+    if (!copied) return;
+
+    const timeout = window.setTimeout(() => setCopied(false), 1800);
+    return () => window.clearTimeout(timeout);
+  }, [copied]);
 
   const detectDisabled = status !== "idle";
   const readDisabled = status !== "idle";
@@ -59,8 +72,8 @@ export default function TextRecognitionPanel({ imageUrl, detectTextRegions, onRe
       if (nextRegions.length === 0) {
         setError("No obvious text regions were detected in this image.");
       }
-    } catch (err: any) {
-      setError(err.message || "Text detection failed.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Text detection failed."));
     } finally {
       setStatus("idle");
     }
@@ -69,6 +82,7 @@ export default function TextRecognitionPanel({ imageUrl, detectTextRegions, onRe
   const handleRead = async () => {
     setStatus("reading");
     setError(null);
+    setCopied(false);
     setProgress(0);
 
     try {
@@ -103,11 +117,23 @@ export default function TextRecognitionPanel({ imageUrl, detectTextRegions, onRe
       } finally {
         await worker.terminate();
       }
-    } catch (err: any) {
-      setError(err.message || "Text reading failed.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Text reading failed."));
     } finally {
       setStatus("idle");
       setProgress(0);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!hasText) return;
+
+    try {
+      await navigator.clipboard.writeText(recognizedText);
+      setCopied(true);
+      setError(null);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Could not copy the recognized text."));
     }
   };
 
@@ -188,8 +214,22 @@ export default function TextRecognitionPanel({ imageUrl, detectTextRegions, onRe
         </div>
 
         <div className="min-h-[180px] rounded-xl border border-border bg-secondary/25 p-3 lg:min-h-full">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-            Recognized text
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
+              Recognized text
+            </div>
+            {hasText && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCopy}
+                className="h-8 gap-2 rounded-lg px-2.5 text-xs"
+                aria-label="Copy recognized text"
+              >
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? "Copied" : "Copy"}
+              </Button>
+            )}
           </div>
           {hasText ? (
             <pre className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground">{recognizedText}</pre>
